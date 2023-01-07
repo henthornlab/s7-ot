@@ -906,6 +906,8 @@ static void AppLayerProtoDetectPrintProbingParsers(AppLayerProtoDetectProbingPar
                         printf("            alproto: ALPROTO_SNMP\n");
                     else if (pp_pe->alproto == ALPROTO_SIP)
                         printf("            alproto: ALPROTO_SIP\n");
+                    else if (pp_pe->alproto == ALPROTO_DELTAV)
+                        printf("            alproto: ALPROTO_DELTAV\n");
                     else if (pp_pe->alproto == ALPROTO_TEMPLATE)
                         printf("            alproto: ALPROTO_TEMPLATE\n");
                     else if (pp_pe->alproto == ALPROTO_RFB)
@@ -989,6 +991,8 @@ static void AppLayerProtoDetectPrintProbingParsers(AppLayerProtoDetectProbingPar
                     printf("            alproto: ALPROTO_SNMP\n");
                 else if (pp_pe->alproto == ALPROTO_SIP)
                     printf("            alproto: ALPROTO_SIP\n");
+                else if (pp_pe->alproto == ALPROTO_DELTAV)
+                    printf("            alproto: ALPROTO_DELTAV\n");
                 else if (pp_pe->alproto == ALPROTO_TEMPLATE)
                     printf("            alproto: ALPROTO_TEMPLATE\n");
                 else if (pp_pe->alproto == ALPROTO_RFB)
