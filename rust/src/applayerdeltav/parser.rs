@@ -16,26 +16,32 @@
  */
 
 use nom7::{
-    bytes::streaming::{take, take_until},
-    combinator::map_res,
-    IResult,
+    bytes::streaming::{take, take_until, tag},
+    number::complete::be_u16,
+//    combinator::map_res,
+   IResult,
 };
-use std;
-
-fn parse_len(input: &str) -> Result<u32, std::num::ParseIntError> {
-    input.parse::<u32>()
-}
+//use std;
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
-    //let (i, len) = map_res(map_res(take_until(":"), std::str::from_utf8), parse_len)(i)?;
-    //let (i, _sep) = take(1_usize)(i)?;
-    //let (i, msg) = map_res(take(len as usize), std::str::from_utf8)(i)?;
-    //let result = msg.to_string();
-    
-    let msg = String::from_utf8_lossy(i);
-    let result = msg.to_string();
-    let i = b"";
-    Ok((i, result))
+    // Message starts with FACE 0xfa 0xce bytes, which was already detected in probe()
+    let (i, _) = tag([0xfa, 0xce])(i)?;
+    // Next two bytes are the length of the message
+    let (i, len) = be_u16(i)?;
+
+    // If the message has "0" length, it's an ACK and we're done
+    if len == 0 {
+        let i = b"";
+        let result = "DV - Ack".to_string();
+        Ok((i, result))
+    }
+    else {
+        
+        let i = b"";
+        let result = "DV - Control Message".to_string();
+        Ok((i, result))
+    }
+
 }
 
 #[cfg(test)]
@@ -45,17 +51,15 @@ mod tests {
 
     /// Simple test of some valid data.
     #[test]
-    fn test_parse_valid() {
-        let buf = b"12:Hello World!4:Bye.";
+    fn test_parse_ack() {
 
-        let result = parse_message(buf);
+        const REQ1: &[u8] = &[0xfa, 0xce, 0x00, 0x00,];
+
+        let result = parse_message(REQ1);
         match result {
             Ok((remainder, message)) => {
                 // Check the first message.
-                assert_eq!(message, "Hello World!");
-
-                // And we should have 6 bytes left.
-                assert_eq!(remainder.len(), 6);
+                assert_eq!(message, "DV - Ack");
             }
             Err(Err::Incomplete(_)) => {
                 panic!("Result should not have been incomplete.");

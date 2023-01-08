@@ -141,6 +141,8 @@ impl DeltaVState {
 
         let mut start = input;
         while !start.is_empty() {
+            //println!("Calling parse_message on start from DeltaVState.parse_request");
+            //println!("start is {:x?}", start);
             match parser::parse_message(start) {
                 Ok((rem, request)) => {
                     start = rem;
@@ -169,6 +171,8 @@ impl DeltaVState {
     }
 
     fn parse_response(&mut self, input: &[u8]) -> AppLayerResult {
+        //println!("Entering parse_response");
+        //println!("inputs is {:x?}", input);
         // We're not interested in empty responses.
         if input.is_empty() {
             return AppLayerResult::ok();
@@ -187,6 +191,8 @@ impl DeltaVState {
         }
         let mut start = input;
         while !start.is_empty() {
+            //println!("Matching parse_message with start");
+            //println!("start is {:x?}", start);
             match parser::parse_message(start) {
                 Ok((rem, response)) => {
                     start = rem;
@@ -223,7 +229,6 @@ impl DeltaVState {
 }
 
 /// Probe for a valid header.
-///
 /// Messages should start with 0xfa 0xce bytes (FACE) 
 fn probe(input: &[u8]) -> nom::IResult<&[u8], ()> {
     // Look at the first two bytes for 0xfa 0xce
@@ -435,6 +440,7 @@ mod test {
         assert!(probe(&[0x0, 0x1, 0x2, 0x3]).is_err());
         assert!(probe(&[0xfa, 0x1, 0xce, 0x2]).is_err());
         assert!(probe(&[0x1, 0xfa, 0xce, 0x2]).is_err());
+        assert!(probe(&[0xfa]).is_err());
         assert!(probe(&[0xfa, 0xce]).is_ok());
         assert!(probe(&[0xfa, 0xce, 0x1]).is_ok());
     }
