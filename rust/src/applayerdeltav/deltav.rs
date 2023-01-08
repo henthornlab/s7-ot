@@ -17,7 +17,7 @@
 
 use super::parser;
 use crate::applayer::{self, *};
-use crate::core::{AppProto, Flow, ALPROTO_UNKNOWN, IPPROTO_TCP};
+use crate::core::{AppProto, Flow, ALPROTO_UNKNOWN, IPPROTO_UDP};
 use nom7 as nom;
 use std;
 use std::collections::VecDeque;
@@ -39,6 +39,7 @@ pub struct DeltaVTransaction {
 
 impl Default for DeltaVTransaction {
     fn default() -> Self {
+        SCLogNotice!("New DeltaV Transaction");
         Self::new()
     }
 }
@@ -223,16 +224,10 @@ impl DeltaVState {
 
 /// Probe for a valid header.
 ///
-/// As this deltav protocol uses messages prefixed with the size
-/// as a string followed by a ':', we look at up to the first 10
-/// characters for that pattern.
+/// Messages should start with 0xfa 0xce bytes (FACE) 
 fn probe(input: &[u8]) -> nom::IResult<&[u8], ()> {
-    let size = std::cmp::min(10, input.len());
-    let (rem, prefix) = nom::bytes::complete::take(size)(input)?;
-    nom::sequence::terminated(
-        nom::bytes::complete::take_while1(nom::character::is_digit),
-        nom::bytes::complete::tag(":"),
-    )(prefix)?;
+    // Look at the first two bytes for 0xfa 0xce
+    let (rem, _prefix) = nom::bytes::complete::tag([0xfa, 0xce])(input)?;
     Ok((rem, ()))
 }
 
@@ -379,11 +374,11 @@ const PARSER_NAME: &[u8] = b"deltav\0";
 
 #[no_mangle]
 pub unsafe extern "C" fn rs_deltav_register_parser() {
-    let default_port = CString::new("[7000]").unwrap();
+    let default_port = CString::new("[18507]").unwrap();
     let parser = RustParser {
         name: PARSER_NAME.as_ptr() as *const c_char,
         default_port: default_port.as_ptr(),
-        ipproto: IPPROTO_TCP,
+        ipproto: IPPROTO_UDP,
         probe_ts: Some(rs_deltav_probing_parser),
         probe_tc: Some(rs_deltav_probing_parser),
         min_depth: 0,
@@ -413,7 +408,7 @@ pub unsafe extern "C" fn rs_deltav_register_parser() {
         get_frame_name_by_id: None,
     };
 
-    let ip_proto_str = CString::new("tcp").unwrap();
+    let ip_proto_str = CString::new("udp").unwrap();
 
     if AppLayerProtoDetectConfProtoDetectionEnabled(ip_proto_str.as_ptr(), parser.name) != 0 {
         let alproto = AppLayerRegisterProtocolDetection(&parser, 1);
@@ -433,10 +428,13 @@ mod test {
 
     #[test]
     fn test_probe() {
-        assert!(probe(b"1").is_err());
-        assert!(probe(b"1:").is_ok());
-        assert!(probe(b"123456789:").is_ok());
-        assert!(probe(b"0123456789:").is_err());
+        assert!(probe([0x0]).is_err());
+        assert!(probe([0x0, 0x1]).is_err());
+        assert!(probe([0x0, 0x1, 0x2]).is_err());
+        assert!(probe([0x0, 0x1, 0x2, 0x3]).is_err());
+        assert!(probe([0xfa, 0x1, 0x2, 0x3]).is_err());
+        assert!(probe([0xfa, 0xce]).is_err());
+        assert!(probe([0xfa, 0xce, 0x1]).is_ok());
     }
 
     #[test]

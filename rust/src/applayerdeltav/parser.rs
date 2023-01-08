@@ -27,10 +27,13 @@ fn parse_len(input: &str) -> Result<u32, std::num::ParseIntError> {
 }
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
-    let (i, len) = map_res(map_res(take_until(":"), std::str::from_utf8), parse_len)(i)?;
-    let (i, _sep) = take(1_usize)(i)?;
-    let (i, msg) = map_res(take(len as usize), std::str::from_utf8)(i)?;
+    //let (i, len) = map_res(map_res(take_until(":"), std::str::from_utf8), parse_len)(i)?;
+    //let (i, _sep) = take(1_usize)(i)?;
+    //let (i, msg) = map_res(take(len as usize), std::str::from_utf8)(i)?;
+    //let result = msg.to_string();
+    let msg = String::from_utf8_lossy(i);
     let result = msg.to_string();
+    let i = b"";
     Ok((i, result))
 }
 
