@@ -1,2 +1,2 @@
 clear
-sudo ./src/suricata -c suricata.yaml -r rust/src/applayerdeltav/dv-downloads.pcap -v
+sudo /usr/bin/suricata -c suricata.yaml -r rust/src/applayerdeltav/dv-downloads.pcap -v

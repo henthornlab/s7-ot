@@ -227,7 +227,8 @@ impl DeltaVState {
 /// Messages should start with 0xfa 0xce bytes (FACE) 
 fn probe(input: &[u8]) -> nom::IResult<&[u8], ()> {
     // Look at the first two bytes for 0xfa 0xce
-    let (rem, _prefix) = nom::bytes::complete::tag([0xfa, 0xce])(input)?;
+    let (rem, prefix) = nom::bytes::complete::take(2usize)(input)?;
+    let (_, _) = nom::bytes::complete::tag([0xfa, 0xce])(prefix)?;
     Ok((rem, ()))
 }
 
@@ -237,7 +238,7 @@ fn probe(input: &[u8]) -> nom::IResult<&[u8], ()> {
 unsafe extern "C" fn rs_deltav_probing_parser(
     _flow: *const Flow, _direction: u8, input: *const u8, input_len: u32, _rdir: *mut u8,
 ) -> AppProto {
-    // Need at least 2 bytes.
+    // Need at least 2 bytes (FA CE bytes + message).
     if input_len > 1 && !input.is_null() {
         let slice = build_slice!(input, input_len as usize);
         if probe(slice).is_ok() {
@@ -428,13 +429,14 @@ mod test {
 
     #[test]
     fn test_probe() {
-        assert!(probe([0x0]).is_err());
-        assert!(probe([0x0, 0x1]).is_err());
-        assert!(probe([0x0, 0x1, 0x2]).is_err());
-        assert!(probe([0x0, 0x1, 0x2, 0x3]).is_err());
-        assert!(probe([0xfa, 0x1, 0x2, 0x3]).is_err());
-        assert!(probe([0xfa, 0xce]).is_err());
-        assert!(probe([0xfa, 0xce, 0x1]).is_ok());
+        assert!(probe(&[0x0]).is_err());
+        assert!(probe(&[0x0, 0x1]).is_err());
+        assert!(probe(&[0x0, 0x1, 0x2]).is_err());
+        assert!(probe(&[0x0, 0x1, 0x2, 0x3]).is_err());
+        assert!(probe(&[0xfa, 0x1, 0xce, 0x2]).is_err());
+        assert!(probe(&[0x1, 0xfa, 0xce, 0x2]).is_err());
+        assert!(probe(&[0xfa, 0xce]).is_ok());
+        assert!(probe(&[0xfa, 0xce, 0x1]).is_ok());
     }
 
     #[test]
