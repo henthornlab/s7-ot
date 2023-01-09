@@ -29,7 +29,8 @@ use nom7::{
 /// (e.g. PIT-150 increased to 100 by username)
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
-    // Message starts with FACE 0xfa 0xce bytes, which was already detected in probe()
+    // We can assume the message starts with FACE bytes, since that was necessary
+    // for the probe() function
     let (i, _) = tag([0xfa, 0xce])(i)?;
     // Next two bytes are the length of the message
     let (i, len) = be_u16(i)?;
@@ -52,7 +53,6 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
         //grab the subtype_code
         let (_i, subtype_code) = be_u16(i)?;
 
-
         let mut result = String::from("DeltaV - ");
         let command_code = (type_code, subtype_code);
 
@@ -66,6 +66,9 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
             _      => result.push_str("Unknown command"),
         }
 
+        // i has some good information left in it, like which alarm is sounding or
+        // who is changing setpoints. It could be mined in the future. 
+        // But for now we are done with it.
         let i = b"";
         Ok((i, result))
     }
@@ -82,13 +85,57 @@ mod tests {
     #[test]
     fn test_parse_ack() {
 
-        const REQ1: &[u8] = &[0xfa, 0xce, 0x00, 0x00,];
+        const REQ: &[u8] = &[0xfa, 0xce, 0x00, 0x00,];
 
-        let result = parse_message(REQ1);
+        let result = parse_message(REQ);
         match result {
-            Ok((remainder, message)) => {
+            Ok((_, message)) => {
                 // Check the first message.
                 assert_eq!(message, "DeltaV - Ack");
+            }
+            Err(Err::Incomplete(_)) => {
+                panic!("Result should not have been incomplete.");
+            }
+            Err(Err::Error(err)) | Err(Err::Failure(err)) => {
+                panic!("Result should not be an error: {:?}.", err);
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_download() {
+
+        const REQ: &[u8] = &[0xfa, 0xce, 0x03, 0xf2, 0x00, 0x02, 
+                            0xbc, 0x95, 0x00, 0x01, 0x28, 0x40, 
+                            0x54,0x80, 0x04, 0x00, 0x08, 0x01];
+
+        let result = parse_message(REQ);
+        match result {
+            Ok((_, message)) => {
+                // Check the first message.
+                assert_eq!(message, "DeltaV - Download detected!");
+            }
+            Err(Err::Incomplete(_)) => {
+                panic!("Result should not have been incomplete.");
+            }
+            Err(Err::Error(err)) | Err(Err::Failure(err)) => {
+                panic!("Result should not be an error: {:?}.", err);
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_heartbeat() {
+
+        const REQ: &[u8] = &[0xfa, 0xce, 0x03, 0xf2, 0x00, 0x06, 
+                            0xbc, 0x95, 0x00, 0x01, 0x28, 0x40, 
+                            0x54,0x80, 0x04, 0x00, 0x08, 0x01];
+
+        let result = parse_message(REQ);
+        match result {
+            Ok((_, message)) => {
+                // Check the first message.
+                assert_eq!(message, "DeltaV - Controller heartbeat");
             }
             Err(Err::Incomplete(_)) => {
                 panic!("Result should not have been incomplete.");
