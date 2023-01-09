@@ -15,6 +15,12 @@
  * 02110-1301, USA.
  */
 
+ /// To-dos:
+ /// Fix the unit tests
+ /// Are the transactions being freed properly? 
+ /// Are the requests and responses being handled correctly?
+ ///
+
 use super::parser;
 use crate::applayer::{self, *};
 use crate::core::{AppProto, Flow, ALPROTO_UNKNOWN, IPPROTO_UDP};
