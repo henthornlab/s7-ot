@@ -39,7 +39,6 @@ pub struct DeltaVTransaction {
 
 impl Default for DeltaVTransaction {
     fn default() -> Self {
-        SCLogNotice!("New DeltaV Transaction");
         Self::new()
     }
 }
@@ -141,8 +140,6 @@ impl DeltaVState {
 
         let mut start = input;
         while !start.is_empty() {
-            //println!("Calling parse_message on start from DeltaVState.parse_request");
-            //println!("start is {:x?}", start);
             match parser::parse_message(start) {
                 Ok((rem, request)) => {
                     start = rem;
@@ -171,8 +168,6 @@ impl DeltaVState {
     }
 
     fn parse_response(&mut self, input: &[u8]) -> AppLayerResult {
-        //println!("Entering parse_response");
-        //println!("inputs is {:x?}", input);
         // We're not interested in empty responses.
         if input.is_empty() {
             return AppLayerResult::ok();
@@ -191,17 +186,15 @@ impl DeltaVState {
         }
         let mut start = input;
         while !start.is_empty() {
-            //println!("Matching parse_message with start");
-            //println!("start is {:x?}", start);
             match parser::parse_message(start) {
                 Ok((rem, response)) => {
                     start = rem;
 
                     if let Some(tx) = self.find_request() {
                         tx.response = Some(response);
-                        SCLogNotice!("Found response for request:");
-                        SCLogNotice!("- Request: {:?}", tx.request);
-                        SCLogNotice!("- Response: {:?}", tx.response);
+                        //SCLogNotice!("Found response for request:");
+                        //SCLogNotice!("- Request: {:?}", tx.request);
+                        //SCLogNotice!("- Response: {:?}", tx.response);
                     }
                 }
                 Err(nom::Err::Incomplete(_)) => {
