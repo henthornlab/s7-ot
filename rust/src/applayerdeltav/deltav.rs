@@ -98,6 +98,7 @@ impl DeltaVState {
             }
         }
         if found {
+            println!("Removing transaction {}", index);
             self.transactions.remove(index);
         }
     }
@@ -109,6 +110,7 @@ impl DeltaVState {
     fn new_tx(&mut self) -> DeltaVTransaction {
         let mut tx = DeltaVTransaction::new();
         self.tx_id += 1;
+        println!("new transaction with index {}", self.tx_id);
         tx.tx_id = self.tx_id;
         return tx;
     }

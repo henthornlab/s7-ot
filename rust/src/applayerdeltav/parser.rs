@@ -18,10 +18,15 @@
 use nom7::{
     bytes::streaming::{take, tag},
     number::complete::be_u16,
-//    combinator::map_res,
    IResult,
 };
-//use std;
+
+
+/// Possible to-dos: 
+/// Should we even send a response for Acks?
+/// code_type 6 seems to be hearbeats. We can tell controller type from heartbeat payload.
+/// Setpoint changes can be parsed to determine which person made the change and to what
+/// (e.g. PIT-150 increased to 100 by username)
 
 pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
     // Message starts with FACE 0xfa 0xce bytes, which was already detected in probe()
@@ -39,6 +44,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
 
         //parse the rest
         let (i, type_code) = be_u16(i)?;
+        // msg_id and sender_id are not currently used but could be
         let (i, _msg_id) = be_u16(i)?;
         let (i, _sender_id) = be_u16(i)?;
         //skip ahead by 6
@@ -51,12 +57,12 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
         let command_code = (type_code, subtype_code);
 
         match command_code {
-            (2, 0x0304) => result.push_str("Controller Reports Alarm or New Setpoint"),
-            (2, 0x0403) => result.push_str("Data change on controller"),
-            (2, 0x0801) => result.push_str("Download detected!"),
-            (2, 0x0802) => result.push_str("Controller acks download"),
-            (2, 0x0a01) => result.push_str("Setpoint change directed"),
-            (6, _) => result.push_str("Controller heartbeat"),
+            (0x02, 0x0304) => result.push_str("Controller Reports Alarm or New Setpoint"),
+            (0x02, 0x0403) => result.push_str("Data change on controller"),
+            (0x02, 0x0801) => result.push_str("Download detected!"),
+            (0x02, 0x0802) => result.push_str("Controller acks download"),
+            (0x02, 0x0a01) => result.push_str("Setpoint change directed"),
+            (0x06, _) => result.push_str("Controller heartbeat"),
             _      => result.push_str("Unknown command"),
         }
 
