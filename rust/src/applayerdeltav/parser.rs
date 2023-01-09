@@ -32,11 +32,12 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
     // If the message has "0" length, it's an ACK and we're done
     if len == 0 {
         let i = b"";
-        let result = "DV - Ack".to_string();
+        let result = "DeltaV - Ack".to_string();
         Ok((i, result))
     }
     else {
 
+        //parse the rest
         let (i, type_code) = be_u16(i)?;
         let (i, _msg_id) = be_u16(i)?;
         let (i, _sender_id) = be_u16(i)?;
@@ -55,6 +56,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
             (2, 0x0801) => result.push_str("Download detected!"),
             (2, 0x0802) => result.push_str("Controller acks download"),
             (2, 0x0a01) => result.push_str("Setpoint change directed"),
+            (6, _) => result.push_str("Controller heartbeat"),
             _      => result.push_str("Unknown command"),
         }
 
@@ -80,7 +82,7 @@ mod tests {
         match result {
             Ok((remainder, message)) => {
                 // Check the first message.
-                assert_eq!(message, "DV - Ack");
+                assert_eq!(message, "DeltaV - Ack");
             }
             Err(Err::Incomplete(_)) => {
                 panic!("Result should not have been incomplete.");
