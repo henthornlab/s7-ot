@@ -45,24 +45,20 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
         //grab the subtype_code
         let (_i, subtype_code) = be_u16(i)?;
 
-        let command_code = (type_code, subtype_code);
-        println!("command_code is {},{}", command_code.0, command_code.1);
-
-        //println!("type_code is {:x?} and subtype_code is {:x?}", type_code, subtype_code);
-        let i = b"";
 
         let mut result = String::from("DeltaV - ");
+        let command_code = (type_code, subtype_code);
 
         match command_code {
-            (2, 1027)  => result.push_str("Data change on controller"),
-            (2, 2049)  => result.push_str("Download detected!"),
-            (2, 2050)  => result.push_str("Controller acks download"),
+            (2, 0x0304) => result.push_str("Controller Reports Alarm or New Setpoint"),
+            (2, 0x0403) => result.push_str("Data change on controller"),
+            (2, 0x0801) => result.push_str("Download detected!"),
+            (2, 0x0802) => result.push_str("Controller acks download"),
+            (2, 0x0a01) => result.push_str("Setpoint change directed"),
             _      => result.push_str("Unknown command"),
         }
 
-       // println!("Exiting match, result is {}", result);
-
-        //let result = "Parsed".to_string();
+        let i = b"";
         Ok((i, result))
     }
 
