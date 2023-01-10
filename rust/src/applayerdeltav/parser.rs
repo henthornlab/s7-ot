@@ -35,10 +35,12 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
     // Next two bytes are the length of the message
     let (i, len) = be_u16(i)?;
 
+    let mut result = String::from("DeltaV - ");
     // If the message has "0" length, it's an ACK and we're done
     if len == 0 {
         let i = b"";
-        let result = "DeltaV - Ack".to_string();
+        result.push_str("Ack");
+        //let result = "DeltaV - Ack".to_string();
         Ok((i, result))
     }
     else {
@@ -53,7 +55,6 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
         //grab the subtype_code
         let (_i, subtype_code) = be_u16(i)?;
 
-        let mut result = String::from("DeltaV - ");
         let command_code = (type_code, subtype_code);
 
         match command_code {
@@ -114,6 +115,28 @@ mod tests {
             Ok((_, message)) => {
                 // Check the first message.
                 assert_eq!(message, "DeltaV - Download detected!");
+            }
+            Err(Err::Incomplete(_)) => {
+                panic!("Result should not have been incomplete.");
+            }
+            Err(Err::Error(err)) | Err(Err::Failure(err)) => {
+                panic!("Result should not be an error: {:?}.", err);
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_download_ack() {
+
+        const REQ: &[u8] = &[0xfa, 0xce, 0x03, 0xf2, 0x00, 0x02, 
+                            0xbc, 0x95, 0x00, 0x01, 0x28, 0x40, 
+                            0x54,0x80, 0x04, 0x00, 0x08, 0x02];
+
+        let result = parse_message(REQ);
+        match result {
+            Ok((_, message)) => {
+                // Check the first message.
+                assert_eq!(message, "DeltaV - Controller acks download");
             }
             Err(Err::Incomplete(_)) => {
                 panic!("Result should not have been incomplete.");

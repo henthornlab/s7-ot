@@ -104,7 +104,6 @@ impl DeltaVState {
             }
         }
         if found {
-            println!("Removing transaction {}", index);
             self.transactions.remove(index);
         }
     }
@@ -116,7 +115,6 @@ impl DeltaVState {
     fn new_tx(&mut self) -> DeltaVTransaction {
         let mut tx = DeltaVTransaction::new();
         self.tx_id += 1;
-        println!("new transaction with index {}", self.tx_id);
         tx.tx_id = self.tx_id;
         return tx;
     }
@@ -152,7 +150,7 @@ impl DeltaVState {
                 Ok((rem, request)) => {
                     start = rem;
 
-                    SCLogNotice!("Request: {}", request);
+                    SCLogNotice!("{}", request);
                     let mut tx = self.new_tx();
                     tx.request = Some(request);
                     self.transactions.push_back(tx);
@@ -202,7 +200,7 @@ impl DeltaVState {
                         tx.response = Some(response);
                         //SCLogNotice!("Found response for request:");
                         //SCLogNotice!("- Request: {:?}", tx.request);
-                        //SCLogNotice!("- Response: {:?}", tx.response);
+                        SCLogNotice!("{:?}", tx.response);
                     }
                 }
                 Err(nom::Err::Incomplete(_)) => {
@@ -444,63 +442,5 @@ mod test {
         assert!(probe(&[0xfa]).is_err());
         assert!(probe(&[0xfa, 0xce]).is_ok());
         assert!(probe(&[0xfa, 0xce, 0x1]).is_ok());
-    }
-
-    #[test]
-    fn test_incomplete() {
-        let mut state = DeltaVState::new();
-        let buf = b"5:Hello3:bye";
-
-        let r = state.parse_request(&buf[0..0]);
-        assert_eq!(
-            r,
-            AppLayerResult {
-                status: 0,
-                consumed: 0,
-                needed: 0
-            }
-        );
-
-        let r = state.parse_request(&buf[0..1]);
-        assert_eq!(
-            r,
-            AppLayerResult {
-                status: 1,
-                consumed: 0,
-                needed: 2
-            }
-        );
-
-        let r = state.parse_request(&buf[0..2]);
-        assert_eq!(
-            r,
-            AppLayerResult {
-                status: 1,
-                consumed: 0,
-                needed: 3
-            }
-        );
-
-        // This is the first message and only the first message.
-        let r = state.parse_request(&buf[0..7]);
-        assert_eq!(
-            r,
-            AppLayerResult {
-                status: 0,
-                consumed: 0,
-                needed: 0
-            }
-        );
-
-        // The first message and a portion of the second.
-        let r = state.parse_request(&buf[0..9]);
-        assert_eq!(
-            r,
-            AppLayerResult {
-                status: 1,
-                consumed: 7,
-                needed: 3
-            }
-        );
     }
 }

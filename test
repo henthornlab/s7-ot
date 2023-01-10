@@ -1,3 +1,5 @@
+make
+sudo make install
 clear
 sudo /usr/bin/suricata -c suricata.yaml -r rust/src/applayerdeltav/dv-downloads.pcap -v
-sudo /usr/bin/suricata -c suricata.yaml -r rust/src/applayerdeltav/dv-pkdownloads.pcapng -v
+#sudo /usr/bin/suricata -c suricata.yaml -r rust/src/applayerdeltav/dv-pkdownloads.pcapng -v
