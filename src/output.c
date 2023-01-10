@@ -87,6 +87,8 @@
 #include "output-json-frame.h"
 #include "output-json-bittorrent-dht.h"
 #include "output-filestore.h"
+#include "output-json-deltav.h"
+
 
 typedef struct RootLogger_ {
     OutputLogFunc LogFunc;
@@ -1123,4 +1125,7 @@ void OutputRegisterLoggers(void)
     JsonFrameLogRegister();
     /* BitTorrent DHT JSON logger */
     JsonBitTorrentDHTLogRegister();
+    /* DeltaV OT Protocol logger */
+    JsonDeltaVLogRegister();
+    
 }
