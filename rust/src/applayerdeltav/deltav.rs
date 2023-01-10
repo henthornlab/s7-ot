@@ -16,7 +16,6 @@
  */
 
  /// To-dos:
- /// Fix the unit tests
  /// Are the transactions being freed properly? 
  /// Are the requests and responses being handled correctly?
  ///
@@ -133,6 +132,7 @@ impl DeltaVState {
 
         // If there was gap, check we can sync up again.
         if self.request_gap {
+            println!("Found a request gap in {}", self.tx_id);
             if probe(input).is_err() {
                 // The parser now needs to decide what to do as we are not in sync.
                 // For this deltav, we'll just try again next time.
@@ -144,30 +144,29 @@ impl DeltaVState {
             self.request_gap = false;
         }
 
-        let mut start = input;
-        while !start.is_empty() {
-            match parser::parse_message(start) {
-                Ok((rem, request)) => {
-                    start = rem;
+        let start = input;
 
-                    SCLogNotice!("{}", request);
-                    let mut tx = self.new_tx();
-                    tx.request = Some(request);
-                    self.transactions.push_back(tx);
-                }
-                Err(nom::Err::Incomplete(_)) => {
-                    // Not enough data. This parser doesn't give us a good indication
-                    // of how much data is missing so just ask for one more byte so the
-                    // parse is called as soon as more data is received.
-                    let consumed = input.len() - start.len();
-                    let needed = start.len() + 1;
-                    return AppLayerResult::incomplete(consumed as u32, needed as u32);
-                }
-                Err(_) => {
-                    return AppLayerResult::err();
-                }
+        match parser::parse_message(start) {
+            Ok((_rem, request)) => {
+
+                SCLogNotice!("{}", request);
+                let mut tx = self.new_tx();
+                tx.request = Some(request);
+                self.transactions.push_back(tx);
+            }
+            Err(nom::Err::Incomplete(_)) => {
+                // Not enough data. This parser doesn't give us a good indication
+                // of how much data is missing so just ask for one more byte so the
+                // parse is called as soon as more data is received.
+                let consumed = input.len() - start.len();
+                let needed = start.len() + 1;
+                return AppLayerResult::incomplete(consumed as u32, needed as u32);
+            }
+            Err(_) => {
+                return AppLayerResult::err();
             }
         }
+
 
         // Input was fully consumed.
         return AppLayerResult::ok();
@@ -190,39 +189,40 @@ impl DeltaVState {
             // state and keep parsing.
             self.response_gap = false;
         }
-        let mut start = input;
-        while !start.is_empty() {
-            match parser::parse_message(start) {
-                Ok((rem, response)) => {
-                    start = rem;
+        
+        let start = input;
+       
+        match parser::parse_message(start) {
+            Ok((_rem, response)) => {
 
-                    if let Some(tx) = self.find_request() {
-                        tx.response = Some(response);
-                        //SCLogNotice!("Found response for request:");
-                        //SCLogNotice!("- Request: {:?}", tx.request);
-                        SCLogNotice!("{:?}", tx.response);
-                    }
-                }
-                Err(nom::Err::Incomplete(_)) => {
-                    let consumed = input.len() - start.len();
-                    let needed = start.len() + 1;
-                    return AppLayerResult::incomplete(consumed as u32, needed as u32);
-                }
-                Err(_) => {
-                    return AppLayerResult::err();
+                if let Some(tx) = self.find_request() {
+                    tx.response = Some(response);
+                    //SCLogNotice!("Found response for request:");
+                    //SCLogNotice!("- Request: {:?}", tx.request);
+                    SCLogNotice!("{:?}", tx.response);
                 }
             }
+            Err(nom::Err::Incomplete(_)) => {
+                let consumed = input.len() - start.len();
+                let needed = start.len() + 1;
+                return AppLayerResult::incomplete(consumed as u32, needed as u32);
+            }
+            Err(_) => {
+                return AppLayerResult::err();
+            }
         }
-
+        
         // All input was fully consumed.
         return AppLayerResult::ok();
     }
 
     fn on_request_gap(&mut self, _size: u32) {
+        println!("In on_request_gap()");
         self.request_gap = true;
     }
 
     fn on_response_gap(&mut self, _size: u32) {
+        println!("In on_response_gap()");
         self.response_gap = true;
     }
 }

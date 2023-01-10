@@ -38,7 +38,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
     let mut result = String::from("DeltaV - ");
     // If the message has "0" length, it's an ACK and we're done
     if len == 0 {
-        let i = b"";
+        //let i = b"";
         result.push_str("Ack");
         //let result = "DeltaV - Ack".to_string();
         Ok((i, result))
@@ -53,7 +53,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
         //skip ahead by 6
         let (i, _sub_msg) = take(6usize)(i)?;
         //grab the subtype_code
-        let (_i, subtype_code) = be_u16(i)?;
+        let (i, subtype_code) = be_u16(i)?;
 
         let command_code = (type_code, subtype_code);
 
@@ -70,7 +70,7 @@ pub fn parse_message(i: &[u8]) -> IResult<&[u8], String> {
         // i has some good information left in it, like which alarm is sounding or
         // who is changing setpoints. It could be mined in the future. 
         // But for now we are done with it.
-        let i = b"";
+        //let i = b"";
         Ok((i, result))
     }
 
