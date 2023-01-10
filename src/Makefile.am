@@ -394,6 +394,7 @@ noinst_HEADERS = \
 	output-json-anomaly.h \
 	output-json-bittorrent-dht.h \
 	output-json-dcerpc.h \
+	output-json-deltav.h \
 	output-json-dhcp.h \
 	output-json-dnp3.h \
 	output-json-dnp3-objects.h \
@@ -1003,6 +1004,7 @@ libsuricata_c_a_SOURCES = \
 	output-json.c \
 	output-json-common.c \
 	output-json-dcerpc.c \
+	output-json-deltav.c \
 	output-json-dhcp.c \
 	output-json-dnp3.c \
 	output-json-dnp3-objects.c \

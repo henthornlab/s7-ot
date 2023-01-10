@@ -28,6 +28,7 @@ config.sub
 configure
 depcomp
 doc/userguide/suricata.1
+eve.json
 etc/suricata.logrotate
 etc/suricata.service
 install-sh
